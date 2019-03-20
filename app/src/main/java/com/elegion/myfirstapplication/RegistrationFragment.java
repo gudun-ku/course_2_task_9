@@ -14,6 +14,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.elegion.myfirstapplication.albums.AlbumsActivity;
 import com.elegion.myfirstapplication.model.User;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -47,7 +48,8 @@ public class RegistrationFragment extends Fragment {
                 ApiUtils.getApiService().registration(user).enqueue(
                         new retrofit2.Callback<Void>() {
                             //используем Handler, чтобы показывать ошибки в Main потоке, т.к. наши коллбеки возвращаются в рабочем потоке
-                            Handler mainHandler = new Handler(getActivity().getMainLooper());
+                            final AuthActivity activity = (AuthActivity) getActivity();
+                            Handler mainHandler = new Handler(activity.getMainLooper());
 
                             @Override
                             public void onResponse(retrofit2.Call<Void> call, final retrofit2.Response<Void> response) {
@@ -57,6 +59,7 @@ public class RegistrationFragment extends Fragment {
                                         if (!response.isSuccessful()) {
                                             //todo добавить полноценную обработку ошибок по кодам ответа от сервера и телу запроса
                                             Gson gson = new GsonBuilder().create();
+                                            /*
                                             try {
                                                 ApiError mApiError = gson.fromJson(response.errorBody().string(),ApiError.class);
                                                 showMessage(mApiError.getErrors().toString());
@@ -64,7 +67,8 @@ public class RegistrationFragment extends Fragment {
                                                 // handle failure to read error
                                                 showMessage(R.string.registration_error);
                                             }
-
+                                            */
+                                            showMessage(activity.getResponseErrorMessage(response.code()));
 
                                         } else {
                                             showMessage(R.string.registration_success);

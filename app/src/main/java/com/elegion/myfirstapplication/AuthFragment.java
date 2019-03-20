@@ -19,6 +19,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.elegion.myfirstapplication.albums.AlbumsActivity;
 import com.elegion.myfirstapplication.model.User;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -50,6 +51,8 @@ public class AuthFragment extends Fragment {
         return fragment;
     }
 
+
+
     private View.OnClickListener mOnEnterClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
@@ -58,7 +61,8 @@ public class AuthFragment extends Fragment {
                 ApiUtils.getApiService(mEmail.getText().toString(),mPassword.getText().toString(),true).authentication().enqueue(
                     new retrofit2.Callback<User>() {
                         //используем Handler, чтобы показывать ошибки в Main потоке, т.к. наши коллбеки возвращаются в рабочем потоке
-                        Handler mainHandler = new Handler(getActivity().getMainLooper());
+                        final AuthActivity activity = (AuthActivity) getActivity();
+                        Handler mainHandler = new Handler(activity.getMainLooper());
 
                         @Override
                         public void onResponse(retrofit2.Call<User> call, final retrofit2.Response<User> response) {
@@ -68,21 +72,27 @@ public class AuthFragment extends Fragment {
                                 if (!response.isSuccessful()) {
                                     //todo добавить полноценную обработку ошибок по кодам ответа от сервера и телу запроса
                                     Gson gson = new GsonBuilder().create();
+                                    /*
                                     try {
                                         ApiError mApiError = gson.fromJson(response.errorBody().string(),ApiError.class);
                                         showMessage(mApiError.getErrors().toString());
+
                                     } catch (IOException e) {
                                         // handle failure to read error
                                         showMessage(R.string.auth_error);
                                     }
+                                    */
+
+                                    showMessage(activity.getResponseErrorMessage(response.code()));
 
                                 } else {
                                     try {
 
                                         User user = response.body();
-                                        Intent startProfileIntent = new Intent(getActivity(), ProfileActivity.class);
+                                        /*Intent startProfileIntent = new Intent(getActivity(), ProfileActivity.class);
                                         startProfileIntent.putExtra(ProfileActivity.USER_KEY, user);
-                                        startActivity(startProfileIntent);
+                                        startActivity(startProfileIntent); */
+                                        startActivity(new Intent(activity, AlbumsActivity.class));
                                         getActivity().finish();
                                     } catch (Exception e) {
                                         e.printStackTrace();

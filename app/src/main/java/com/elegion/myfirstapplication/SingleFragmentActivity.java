@@ -6,6 +6,8 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 
+import com.elegion.myfirstapplication.albums.AlbumsFragment;
+
 public abstract class SingleFragmentActivity extends AppCompatActivity {
 
     @Override
@@ -16,6 +18,7 @@ public abstract class SingleFragmentActivity extends AppCompatActivity {
             FragmentManager fragmentManager = getSupportFragmentManager();
             fragmentManager.beginTransaction()
                     .replace(R.id.fragmentContainer, getFragment())
+                    .addToBackStack(getFragment().getClass().getSimpleName())
                     .commit();
         }
     }
@@ -30,5 +33,15 @@ public abstract class SingleFragmentActivity extends AppCompatActivity {
         } else {
             fragmentManager.popBackStack();
         }
+    }
+
+    private int getResourceIdentifier(int errorCode) {
+        int id = getResources().getIdentifier(getString(R.string.response_code_prefix) +
+                String.valueOf(errorCode), "string", getPackageName());
+        return id;
+    }
+
+    public String getResponseErrorMessage(int errorCode) {
+        return getString(getResourceIdentifier(errorCode));
     }
 }
