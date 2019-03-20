@@ -21,6 +21,7 @@ import android.widget.Toast;
 
 import com.elegion.myfirstapplication.model.User;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 
 import java.io.IOException;
@@ -66,7 +67,15 @@ public class AuthFragment extends Fragment {
                                 public void run() {
                                 if (!response.isSuccessful()) {
                                     //todo добавить полноценную обработку ошибок по кодам ответа от сервера и телу запроса
-                                    showMessage(R.string.auth_error);
+                                    Gson gson = new GsonBuilder().create();
+                                    try {
+                                        ApiError mApiError = gson.fromJson(response.errorBody().string(),ApiError.class);
+                                        showMessage(mApiError.getErrors().toString());
+                                    } catch (IOException e) {
+                                        // handle failure to read error
+                                        showMessage(R.string.auth_error);
+                                    }
+
                                 } else {
                                     try {
 
@@ -137,6 +146,10 @@ public class AuthFragment extends Fragment {
 
     private void showMessage(@StringRes int string) {
         Toast.makeText(getActivity(), string, Toast.LENGTH_LONG).show();
+    }
+
+    private void showMessage(String message) {
+        Toast.makeText(getActivity(), message, Toast.LENGTH_LONG).show();
     }
 
     @Nullable

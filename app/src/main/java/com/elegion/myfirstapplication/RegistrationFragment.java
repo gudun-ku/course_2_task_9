@@ -15,8 +15,12 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.elegion.myfirstapplication.model.User;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
+import java.io.IOException;
 import okhttp3.MediaType;
+
 
 public class RegistrationFragment extends Fragment {
     public static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
@@ -52,7 +56,16 @@ public class RegistrationFragment extends Fragment {
                                     public void run() {
                                         if (!response.isSuccessful()) {
                                             //todo добавить полноценную обработку ошибок по кодам ответа от сервера и телу запроса
-                                            showMessage(R.string.registration_error);
+                                            Gson gson = new GsonBuilder().create();
+                                            try {
+                                                ApiError mApiError = gson.fromJson(response.errorBody().string(),ApiError.class);
+                                                showMessage(mApiError.getErrors().toString());
+                                            } catch (IOException e) {
+                                                // handle failure to read error
+                                                showMessage(R.string.registration_error);
+                                            }
+
+
                                         } else {
                                             showMessage(R.string.registration_success);
                                             getFragmentManager().popBackStack();
@@ -114,6 +127,10 @@ public class RegistrationFragment extends Fragment {
 
     private void showMessage(@StringRes int string) {
         Toast.makeText(getActivity(), string, Toast.LENGTH_LONG).show();
+    }
+
+    private void showMessage(String message) {
+        Toast.makeText(getActivity(), message, Toast.LENGTH_LONG).show();
     }
 
 }
