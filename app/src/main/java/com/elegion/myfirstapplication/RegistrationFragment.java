@@ -190,8 +190,7 @@ public class RegistrationFragment extends Fragment {
         String password = mPassword.getText().toString();
         String retypedPassword = mPasswordAgain.getText().toString();
 
-        boolean result = !password.equals(retypedPassword)
-                        && password.length() >= 8;
+        boolean result = password.equals(retypedPassword);
         if (!result)
             mPasswordAgain.setError(getString(R.string.retyped_password_validation_error));
 

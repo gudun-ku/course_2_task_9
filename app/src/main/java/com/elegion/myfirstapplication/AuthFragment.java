@@ -108,11 +108,13 @@ public class AuthFragment extends Fragment {
     };
 
     private void highlightErrors(ApiError error, SingleFragmentActivity activity) {
+        /*
         ApiError.ErrorBean errorBean = error.getError();
         int code = error.getCode();
-        //String commonMessage = activity.getResponseErrorMessage(code);
+        String commonMessage = activity.getResponseErrorMessage(code);
+        */
         // По требованиям к заданию
-        String commonMessage = getString(R.string.email_validation_error);
+        String commonMessage = getString(R.string.response_code_400);
 
         mEmail.setError(commonMessage);
         mPassword.setError(commonMessage);
