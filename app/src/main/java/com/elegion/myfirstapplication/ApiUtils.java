@@ -8,14 +8,17 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import java.io.IOException;
+import java.lang.annotation.Annotation;
 
 import okhttp3.Authenticator;
 import okhttp3.Credentials;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.ResponseBody;
 import okhttp3.Route;
 import okhttp3.logging.HttpLoggingInterceptor;
+import retrofit2.Converter;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
@@ -38,6 +41,10 @@ public class ApiUtils {
                 @Override
                 public Request authenticate(@NonNull Route route, @NonNull Response response) throws IOException {
                     String credential = Credentials.basic(email, password);
+                    // If we already failed with these credentials, don't retry.
+                    if (credential.equals(response.request().header("Authorization"))) {
+                        return null;
+                    }
                     return response.request().newBuilder().header("Authorization", credential).build();
                 }
             });
@@ -110,6 +117,23 @@ public class ApiUtils {
                     .create(AcademyApi.class);
         }
         return api;
+    }
+
+    public static ApiError parseError(retrofit2.Response<?> response, int statusCode) {
+        Converter<ResponseBody, ApiError> converter =
+                ApiUtils.getRetrofit()
+                        .responseBodyConverter(ApiError.class, new Annotation[0]);
+
+        ApiError error;
+
+        try {
+            error = converter.convert(response.errorBody());
+            error.setCode(statusCode);
+        } catch (IOException e) {
+            error = new ApiError(statusCode);
+        }
+
+        return error;
     }
 
 }

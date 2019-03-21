@@ -56,8 +56,7 @@ public class AuthFragment extends Fragment {
     private View.OnClickListener mOnEnterClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
-            if (isEmailValid() && isPasswordValid()) {
-
+            if (isInputValid()) {
                 ApiUtils.getApiService(mEmail.getText().toString(),mPassword.getText().toString(),true).authentication().enqueue(
                     new retrofit2.Callback<User>() {
                         //используем Handler, чтобы показывать ошибки в Main потоке, т.к. наши коллбеки возвращаются в рабочем потоке
@@ -70,20 +69,9 @@ public class AuthFragment extends Fragment {
                                 @Override
                                 public void run() {
                                 if (!response.isSuccessful()) {
-                                    //todo добавить полноценную обработку ошибок по кодам ответа от сервера и телу запроса
-                                    Gson gson = new GsonBuilder().create();
-                                    /*
-                                    try {
-                                        ApiError mApiError = gson.fromJson(response.errorBody().string(),ApiError.class);
-                                        showMessage(mApiError.getErrors().toString());
-
-                                    } catch (IOException e) {
-                                        // handle failure to read error
-                                        showMessage(R.string.auth_error);
-                                    }
-                                    */
-
-                                    showMessage(activity.getResponseErrorMessage(response.code()));
+                                    //completed добавить полноценную обработку ошибок по кодам ответа от сервера и телу запроса
+                                    ApiError error = ApiUtils.parseError(response,response.code());
+                                    highlightErrors(error, activity);
 
                                 } else {
                                     try {
@@ -119,6 +107,20 @@ public class AuthFragment extends Fragment {
         }
     };
 
+    private void highlightErrors(ApiError error, SingleFragmentActivity activity) {
+        ApiError.ErrorBean errorBean = error.getError();
+        int code = error.getCode();
+        //String commonMessage = activity.getResponseErrorMessage(code);
+        // По требованиям к заданию
+        String commonMessage = getString(R.string.email_validation_error);
+
+        mEmail.setError(commonMessage);
+        mPassword.setError(commonMessage);
+
+        showMessage(commonMessage);
+    }
+
+
     private View.OnClickListener mOnRegisterClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
@@ -145,13 +147,31 @@ public class AuthFragment extends Fragment {
         }
     };
 
+    private boolean isInputValid() {
+        return isEmailValid()
+                & isPasswordValid();
+    }
+
     private boolean isEmailValid() {
-        return !TextUtils.isEmpty(mEmail.getText())
+        boolean result =
+        !TextUtils.isEmpty(mEmail.getText())
                 && Patterns.EMAIL_ADDRESS.matcher(mEmail.getText()).matches();
+
+        if (!result)
+            mEmail.setError(getString(R.string.email_validation_error));
+
+        return result;
     }
 
     private boolean isPasswordValid() {
-        return !TextUtils.isEmpty(mPassword.getText());
+        String password = mPassword.getText().toString();
+        boolean result =
+                !TextUtils.isEmpty(password)
+                        && (password.length() >= 8);
+        if (!result)
+            mPassword.setError(getString(R.string.password_validation_error));
+
+        return result;
     }
 
     private void showMessage(@StringRes int string) {

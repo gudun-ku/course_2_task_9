@@ -20,6 +20,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import java.io.IOException;
+import java.util.List;
+
 import okhttp3.MediaType;
 
 
@@ -57,19 +59,10 @@ public class RegistrationFragment extends Fragment {
                                     @Override
                                     public void run() {
                                         if (!response.isSuccessful()) {
-                                            //todo добавить полноценную обработку ошибок по кодам ответа от сервера и телу запроса
-                                            Gson gson = new GsonBuilder().create();
-                                            /*
-                                            try {
-                                                ApiError mApiError = gson.fromJson(response.errorBody().string(),ApiError.class);
-                                                showMessage(mApiError.getErrors().toString());
-                                            } catch (IOException e) {
-                                                // handle failure to read error
-                                                showMessage(R.string.registration_error);
-                                            }
-                                            */
-                                            showMessage(activity.getResponseErrorMessage(response.code()));
+                                            //completed добавить полноценную обработку ошибок по кодам ответа от сервера и телу запроса
 
+                                            ApiError error = ApiUtils.parseError(response,response.code());
+                                            highlightErrors(error, activity);
                                         } else {
                                             showMessage(R.string.registration_success);
                                             getFragmentManager().popBackStack();
@@ -94,6 +87,49 @@ public class RegistrationFragment extends Fragment {
         }
     };
 
+    private void highlightErrors(ApiError error, SingleFragmentActivity activity) {
+        ApiError.ErrorBean errorBean = error.getError();
+        int code = error.getCode();
+        String commonMessage = activity.getResponseErrorMessage(code);
+
+        if (errorBean != null) {
+            String currentError = errorBean.getNameFirstError();
+            if (!currentError.isEmpty())
+                mName.setError(currentError);
+            else
+                mName.setError(null);
+
+            currentError = errorBean.getEmailFirstError();
+
+            //Подсвечиваем все поля - имя, еmai
+            if (!currentError.isEmpty()) {
+                mEmail.setError(commonMessage);
+                mName.setError(commonMessage);
+            } else {
+                mEmail.setError(null);
+                mName.setError(null);
+            }
+
+
+            currentError = errorBean.getPasswordFirstError();
+            if (!currentError.isEmpty()) {
+                mPassword.setError(currentError);
+                mPasswordAgain.setError(currentError);
+            }
+            else{
+                mPassword.setError(null);
+                mPasswordAgain.setError(currentError);
+            }
+        } else {
+            mEmail.setError(commonMessage);
+            mName.setError(commonMessage);
+            mPassword.setError(commonMessage);
+            mPasswordAgain.setError(commonMessage);
+        }
+
+        showMessage(commonMessage);
+    }
+
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -110,24 +146,58 @@ public class RegistrationFragment extends Fragment {
         return view;
     }
 
+
     private boolean isInputValid() {
-        return isEmailValid(mEmail.getText().toString())
-                && !TextUtils.isEmpty(mName.getText())
-                && isPasswordsValid();
+        return isEmailValid()
+                & isNameValid()
+                & isPasswordValid()
+                & isRetypedPasswordsValid();
     }
 
-    private boolean isEmailValid(String email) {
-        return !TextUtils.isEmpty(email) && Patterns.EMAIL_ADDRESS.matcher(email).matches();
+
+    private boolean isEmailValid() {
+        boolean result =
+                !TextUtils.isEmpty(mEmail.getText())
+                        && Patterns.EMAIL_ADDRESS.matcher(mEmail.getText()).matches();
+        if (!result)
+            mEmail.setError(getString(R.string.email_validation_error));
+
+        return result;
     }
 
-    private boolean isPasswordsValid() {
+    private boolean isNameValid() {
+        boolean result =!TextUtils.isEmpty(mName.getText());
+
+        if (!result)
+            mName.setError(getString(R.string.username_validation_error));
+
+        return result;
+    }
+
+    private boolean isPasswordValid() {
         String password = mPassword.getText().toString();
-        String passwordAgain = mPasswordAgain.getText().toString();
 
-        return password.equals(passwordAgain)
-                && !TextUtils.isEmpty(password)
-                && !TextUtils.isEmpty(passwordAgain);
+        boolean result =
+                !TextUtils.isEmpty(password)
+                        && password.length() >= 8;
+        if (!result)
+            mPassword.setError(getString(R.string.password_validation_error));
+
+        return result;
     }
+
+    private boolean isRetypedPasswordsValid() {
+        String password = mPassword.getText().toString();
+        String retypedPassword = mPasswordAgain.getText().toString();
+
+        boolean result = !password.equals(retypedPassword)
+                        && password.length() >= 8;
+        if (!result)
+            mPasswordAgain.setError(getString(R.string.retyped_password_validation_error));
+
+        return result;
+    }
+
 
     private void showMessage(@StringRes int string) {
         Toast.makeText(getActivity(), string, Toast.LENGTH_LONG).show();
